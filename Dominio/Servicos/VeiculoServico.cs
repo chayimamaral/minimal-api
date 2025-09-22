@@ -42,7 +42,7 @@ namespace minimal_api.Dominio.Servicos
             _contexto.SaveChanges();
         }
 
-        public List<Veiculo> ObterTodos(int pagina = 1, string? nome = null, string? marca = null)
+        public List<Veiculo> ObterTodos(int? pagina = 1, string? nome = null, string? marca = null)
         {
             var query = _contexto.Veiculos.AsQueryable();
             if (!string.IsNullOrEmpty(nome))
@@ -51,10 +51,19 @@ namespace minimal_api.Dominio.Servicos
             }
 
             int itensPorPagina = 10;
+            if(pagina == null)
+            {
+                pagina = 1;
+            }   
 
-            query = query.Skip((pagina - 1) * itensPorPagina).Take(itensPorPagina);
+            query = query.Skip(((int) pagina - 1) * itensPorPagina).Take(itensPorPagina);
 
             return query.ToList();
         }
-    }
+
+    // public List<Veiculo> ObterTodos(int pagina = 1, string? nome = null, string? marca = null)
+    // {
+    //   throw new NotImplementedException();
+    // }
+  }
 }

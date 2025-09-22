@@ -49,8 +49,50 @@ app.MapPost("/administradores/login", ([FromBody] LoginDTO loginDTO, IAdministra
 #endregion
 
 #region Veiculos
+
+static ErrosDeValidacao validaDTO(VeiculoDTO veiculoDTO)
+{
+  var validacao = new ErrosDeValidacao
+  {
+    Mensagens = new List<string>()
+  };
+
+  if (veiculoDTO == null)
+  {
+    validacao.Mensagens.Add("Dados do veículo não podem ser nulos.");
+    return validacao;
+  }
+
+  if (string.IsNullOrEmpty(veiculoDTO.Nome) || veiculoDTO.Nome.Length < 3)
+    validacao.Mensagens.Add("Nome do veículo deve ter pelo menos 3 caracteres.");
+
+  if (string.IsNullOrEmpty(veiculoDTO.Modelo) || veiculoDTO.Modelo.Length < 3)
+    validacao.Mensagens.Add("Modelo do veículo deve ter pelo menos 3 caracteres.");
+
+  if (veiculoDTO.Ano < 1886 || veiculoDTO.Ano > DateTime.Now.Year)
+    validacao.Mensagens.Add("Ano do veículo deve ser entre 1886 e o ano atual.");
+
+  return validacao;
+}
+
 app.MapPost("/veiculo", ([FromBody] VeiculoDTO veiculoDTO, IVeiculoServico veiculoServico) =>
 {
+  //var validacao = new ErrosDeValidacao();
+  var validacao = validaDTO(veiculoDTO);
+  // if (string.IsNullOrEmpty(veiculoDTO.Nome) || veiculoDTO.Nome.Length < 3)
+  //   validacao.Mensagens.Add("Nome do veículo deve ter pelo menos 3 caracteres.");
+
+  // if (string.IsNullOrEmpty(veiculoDTO.Modelo) || veiculoDTO.Modelo.Length < 3)
+  //   validacao.Mensagens.Add("Modelo do veículo deve ter pelo menos 3 caracteres.");
+
+  // if (veiculoDTO.Ano < 1886 || veiculoDTO.Ano > DateTime.Now.Year)
+  //   validacao.Mensagens.Add("Ano do veículo deve ser entre 1886 e o ano atual.");
+
+  if (validacao.Mensagens.Any())
+  {
+    return Results.BadRequest(validacao);
+  }
+
   var veiculo = new Veiculo
   {
     Nome = veiculoDTO.Nome,
@@ -87,9 +129,13 @@ app.MapPut("/veiculos/{id}", ([FromRoute] int? id, [FromBody] VeiculoDTO veiculo
 {
   var veiculo = veiculoServico.BuscarPorId(id ?? 0);
 
-  if (veiculo == null)
+  if (veiculo == null) return Results.NotFound();
+
+
+  var validacao = new ErrosDeValidacao();
+  if (validacao.Mensagens.Count > 0)
   {
-    return Results.NotFound();
+    return Results.BadRequest(validacao);
   }
 
   veiculo.Nome = veiculoDTO.Nome;
@@ -99,6 +145,21 @@ app.MapPut("/veiculos/{id}", ([FromRoute] int? id, [FromBody] VeiculoDTO veiculo
   veiculoServico.Atualizar(veiculo);
 
   return Results.Ok(veiculo);
+
+}).WithTags("Veiculo");
+
+app.MapDelete("/veiculos/{id}", ([FromRoute] int? id, IVeiculoServico veiculoServico) =>
+{
+  var veiculo = veiculoServico.BuscarPorId(id ?? 0);
+
+  if (veiculo == null)
+  {
+    return Results.NotFound();
+  }
+
+  veiculoServico.Deletar(veiculo);
+
+  return Results.NoContent();
 
 }).WithTags("Veiculo");
 

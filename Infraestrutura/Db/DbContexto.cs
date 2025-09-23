@@ -33,12 +33,20 @@ namespace minimal_api.Infraestrutura.Db
             if (!optionsBuilder.IsConfigured)
             {
 
+                if (_configurationAppSettings == null)
+                {
+                    throw new Exception("IConfiguration is not initialized.");
+                }
+
                 var stringConexao = _configurationAppSettings.GetConnectionString("PostgreSqlConnection")?.ToString();
                 if (!string.IsNullOrEmpty(stringConexao))
                 {
                     optionsBuilder.UseNpgsql(stringConexao);
                 }
-                throw new Exception("String de conexão nula");
+                else
+                {
+                    throw new Exception("String de conexão nula");
+                }
             }
         }
     }

@@ -19,14 +19,26 @@ namespace minimal_api.Dominio.Servicos
             _contexto = contexto;
         }
 
-        public Administrador Atualizar(Administrador administrador)
+        public void Atualizar(Administrador administrador)
+
         {
-            throw new NotImplementedException();
+            _contexto.Administradores.Update(administrador);
+            _contexto.SaveChanges();
+
         }
 
-        public bool Deletar(int id)
+        public bool Deletar(Administrador administrador)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _contexto.Administradores.Remove(administrador);
+                _contexto.SaveChanges();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public Administrador Incluir(Administrador administrador)
@@ -43,12 +55,12 @@ namespace minimal_api.Dominio.Servicos
 
         }
 
-        public Administrador BuscarPorId(int id)
+        public Administrador? BuscarPorId(int id)
         {
-            throw new NotImplementedException();
+            return _contexto.Administradores.Find(id);
         }
 
-        public List<Administrador> ObterTodos(int? pagina = 1, string? email = null, string? senha = null)
+        public List<Administrador> ObterTodos(int? pagina = 1)
 
         {
             var query = _contexto.Administradores.AsQueryable();
@@ -65,10 +77,6 @@ namespace minimal_api.Dominio.Servicos
             return query.ToList();
         }
 
-        public List<Administrador> ObterTodos(int? pagina, int? tamanhoPagina)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
 

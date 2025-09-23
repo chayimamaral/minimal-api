@@ -11,7 +11,6 @@ using minimal_api.Dominio.Enums; // Add this if Veiculo is in this namespace
 #region Builder
 var builder = WebApplication.CreateBuilder(args);
 
-//IServiceCollection serviceCollection = builder.Services.AddScoped<IAdministradorServico, AdministradorServico>();
 builder.Services.AddScoped<IAdministradorServico, AdministradorServico>();
 builder.Services.AddScoped<IVeiculoServico, VeiculoServico>();
 
@@ -38,20 +37,19 @@ app.MapGet("/", () => Results.Json(new Home())).WithTags("Home");
 #endregion
 
 #region Adminstradores
+
+//login administrador
 app.MapPost("/administradores/login", ([FromBody] LoginDTO loginDTO, IAdministradorServico administradorServico) =>
 {
   if (administradorServico.Login(loginDTO) != null)
-
     return Results.Ok("Login com sucesso");
   else
-
     return Results.Unauthorized();
 }).WithTags("Administrador");
 
-
+//incluir administrador
 app.MapPost("/administrador", ([FromBody] AdministradorDTO administradorDTO, IAdministradorServico administradorServico) =>
 {
-
   var validacao = new ErrosDeValidacao
   {
     Mensagens = new List<string>()
@@ -76,7 +74,7 @@ app.MapPost("/administrador", ([FromBody] AdministradorDTO administradorDTO, IAd
   {
     Email = administradorDTO.Email,
     Senha = administradorDTO.Senha,
-    Perfil = administradorDTO.Perfil.ToString() ?? Perfil.editor.ToString()
+    Perfil = administradorDTO.Perfil.ToString() ?? Perfil.Editor.ToString()
   };
 
   administradorServico.Incluir(administrador);
@@ -84,15 +82,53 @@ app.MapPost("/administrador", ([FromBody] AdministradorDTO administradorDTO, IAd
   return Results.Created($"/administrador/{administrador.Id}", administrador);
 }).WithTags("Administrador");
 
+//obter todos administradores
 app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorServico administradorServico) =>
 {
-  var administradores = administradorServico.ObterTodos(pagina ?? 1, pagina ?? 10);
+  var adms = new List<AdministradorModelView>();
+  var administradores = administradorServico.ObterTodos(pagina ?? 1);
 
-  return Results.Ok(administradores);
+  foreach (var adm in administradores)
+  {
+    adms.Add(new AdministradorModelView
+    {
+      Id = adm.Id,
+      Email = adm.Email,
+      Perfil = adm.Perfil
+    });
+  }
+
+  return Results.Ok(adms);
 
 }).WithTags("Administrador");
 
+
+//obter administrador por id
 app.MapGet("/administrador/{id}", ([FromRoute] int? id, IAdministradorServico administradorServico) =>
+{
+  var administrador = administradorServico.BuscarPorId(id ?? 0);
+
+  var adms = new AdministradorModelView();
+
+  if (administrador == null)
+  {
+    return Results.NotFound();
+  }
+
+  var adm = new AdministradorModelView
+  {
+    Id = administrador.Id,
+    Email = administrador.Email,
+    Perfil = administrador.Perfil
+  };
+
+
+  return Results.Ok(adm);
+
+}).WithTags("Administrador");
+
+//deletar administrador
+app.MapDelete("/administrador/{id}", ([FromRoute] int? id, IAdministradorServico administradorServico) =>
 {
   var administrador = administradorServico.BuscarPorId(id ?? 0);
 
@@ -100,9 +136,31 @@ app.MapGet("/administrador/{id}", ([FromRoute] int? id, IAdministradorServico ad
   {
     return Results.NotFound();
   }
+
+  administradorServico.Deletar(administrador);
+
+  return Results.NoContent();
+
+}).WithTags("Administrador");
+
+//atualizar administrador
+app.MapPut("/administradores/{id}", ([FromRoute] int? id, [FromBody] AdministradorDTO administradorDTO, IAdministradorServico administradorServico) =>
+{
+
+  var administrador = administradorServico.BuscarPorId(id ?? 0);
+
+  if (administrador == null) return Results.NotFound();
+
+  administrador.Email = administradorDTO.Email;
+  administrador.Senha = administradorDTO.Senha;
+  administrador.Perfil = administradorDTO.Perfil.ToString() ?? Perfil.Editor.ToString();
+
+  administradorServico.Atualizar(administrador);
+
   return Results.Ok(administrador);
 
 }).WithTags("Administrador");
+
 
 #endregion
 
@@ -133,6 +191,7 @@ static ErrosDeValidacao validaDTO(VeiculoDTO veiculoDTO)
   return validacao;
 }
 
+//incluir veiculo
 app.MapPost("/veiculo", ([FromBody] VeiculoDTO veiculoDTO, IVeiculoServico veiculoServico) =>
 {
 
@@ -155,6 +214,7 @@ app.MapPost("/veiculo", ([FromBody] VeiculoDTO veiculoDTO, IVeiculoServico veicu
 
 }).WithTags("Veiculo");
 
+//obter todos veiculos
 app.MapGet("/veiculos", ([FromQuery] int? pagina, IVeiculoServico veiculoServico) =>
 {
   var veiculos = veiculoServico.ObterTodos(pagina ?? 1);
@@ -163,6 +223,7 @@ app.MapGet("/veiculos", ([FromQuery] int? pagina, IVeiculoServico veiculoServico
 
 }).WithTags("Veiculo");
 
+//obter veiculo por id
 app.MapGet("/veiculo/{id}", ([FromRoute] int? id, IVeiculoServico veiculoServico) =>
 {
   var veiculo = veiculoServico.BuscarPorId(id ?? 0);
@@ -175,6 +236,7 @@ app.MapGet("/veiculo/{id}", ([FromRoute] int? id, IVeiculoServico veiculoServico
 
 }).WithTags("Veiculo");
 
+//atualizar veiculo
 app.MapPut("/veiculos/{id}", ([FromRoute] int? id, [FromBody] VeiculoDTO veiculoDTO, IVeiculoServico veiculoServico) =>
 {
 
@@ -199,6 +261,7 @@ app.MapPut("/veiculos/{id}", ([FromRoute] int? id, [FromBody] VeiculoDTO veiculo
 
 }).WithTags("Veiculo");
 
+//deletar veiculo
 app.MapDelete("/veiculos/{id}", ([FromRoute] int? id, IVeiculoServico veiculoServico) =>
 {
   var veiculo = veiculoServico.BuscarPorId(id ?? 0);

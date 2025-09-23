@@ -21,5 +21,7 @@ namespace minimal_api.Dominio.Entidades
         [Required]
         [StringLength(10)]
         public string Perfil { get; set; } = default!;
-    }
+
+    // Removed invalid implicit operator
+  }
 }

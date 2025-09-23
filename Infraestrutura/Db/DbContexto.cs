@@ -7,16 +7,10 @@ using minimal_api.Dominio.Entidades;
 
 namespace minimal_api.Infraestrutura.Db
 {
-    public class DbContexto : DbContext
+    public class DbContexto(DbContextOptions<DbContexto> options) : DbContext(options)
     {
 
-        private readonly IConfiguration _configurationAppSettings;
-        // public DbContexto(IConfiguration configurationAppSettings)
-        // {
-        //     _configurationAppSettings = configurationAppSettings;
-
-        // }
-        public DbContexto(DbContextOptions<DbContexto> options) : base(options) { }
+        private readonly IConfiguration? _configurationAppSettings;
 
         public DbSet<Administrador> Administradores { get; set; } = default!;
         public DbSet<Veiculo> Veiculos { get; set; } = default!;

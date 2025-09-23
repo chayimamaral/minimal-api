@@ -5,7 +5,8 @@ using minimal_api.Dominio.Interfaces;
 using minimal_api.Dominio.Servicos; // Add this line if AdministradorServico is here
 using Microsoft.AspNetCore.Mvc;
 using minimal_api.Dominio.ModelViews;
-using minimal_api.Dominio.Entidades; // Add this if Veiculo is in this namespace
+using minimal_api.Dominio.Entidades;
+using minimal_api.Dominio.Enums; // Add this if Veiculo is in this namespace
 
 #region Builder
 var builder = WebApplication.CreateBuilder(args);
@@ -46,6 +47,63 @@ app.MapPost("/administradores/login", ([FromBody] LoginDTO loginDTO, IAdministra
 
     return Results.Unauthorized();
 }).WithTags("Administrador");
+
+
+app.MapPost("/administrador", ([FromBody] AdministradorDTO administradorDTO, IAdministradorServico administradorServico) =>
+{
+
+  var validacao = new ErrosDeValidacao
+  {
+    Mensagens = new List<string>()
+  };
+
+  if (string.IsNullOrEmpty(administradorDTO.Email) || !administradorDTO.Email.Contains("@"))
+    validacao.Mensagens.Add("Email inválido.");
+
+  if (string.IsNullOrEmpty(administradorDTO.Senha) || administradorDTO.Senha.Length < 6)
+    validacao.Mensagens.Add("Senha não pode ter menos que 6 caracteres.");
+
+  //if (string.IsNullOrEmpty(administradorDTO.Perfil.ToString()) || administradorDTO.Perfil.ToString().Length < 3)
+  if (administradorDTO.Perfil == null || !Enum.IsDefined(typeof(Perfil), administradorDTO.Perfil))
+    validacao.Mensagens.Add("Perfil inválido.");
+
+  if (validacao.Mensagens.Any())
+  {
+    return Results.BadRequest(validacao);
+  }
+
+  var administrador = new Administrador
+  {
+    Email = administradorDTO.Email,
+    Senha = administradorDTO.Senha,
+    Perfil = administradorDTO.Perfil.ToString() ?? Perfil.editor.ToString()
+  };
+
+  administradorServico.Incluir(administrador);
+
+  return Results.Created($"/administrador/{administrador.Id}", administrador);
+}).WithTags("Administrador");
+
+app.MapGet("/administradores", ([FromQuery] int? pagina, IAdministradorServico administradorServico) =>
+{
+  var administradores = administradorServico.ObterTodos(pagina ?? 1, pagina ?? 10);
+
+  return Results.Ok(administradores);
+
+}).WithTags("Administrador");
+
+app.MapGet("/administrador/{id}", ([FromRoute] int? id, IAdministradorServico administradorServico) =>
+{
+  var administrador = administradorServico.BuscarPorId(id ?? 0);
+
+  if (administrador == null)
+  {
+    return Results.NotFound();
+  }
+  return Results.Ok(administrador);
+
+}).WithTags("Administrador");
+
 #endregion
 
 #region Veiculos
@@ -77,16 +135,8 @@ static ErrosDeValidacao validaDTO(VeiculoDTO veiculoDTO)
 
 app.MapPost("/veiculo", ([FromBody] VeiculoDTO veiculoDTO, IVeiculoServico veiculoServico) =>
 {
-  //var validacao = new ErrosDeValidacao();
+
   var validacao = validaDTO(veiculoDTO);
-  // if (string.IsNullOrEmpty(veiculoDTO.Nome) || veiculoDTO.Nome.Length < 3)
-  //   validacao.Mensagens.Add("Nome do veículo deve ter pelo menos 3 caracteres.");
-
-  // if (string.IsNullOrEmpty(veiculoDTO.Modelo) || veiculoDTO.Modelo.Length < 3)
-  //   validacao.Mensagens.Add("Modelo do veículo deve ter pelo menos 3 caracteres.");
-
-  // if (veiculoDTO.Ano < 1886 || veiculoDTO.Ano > DateTime.Now.Year)
-  //   validacao.Mensagens.Add("Ano do veículo deve ser entre 1886 e o ano atual.");
 
   if (validacao.Mensagens.Any())
   {
@@ -113,7 +163,7 @@ app.MapGet("/veiculos", ([FromQuery] int? pagina, IVeiculoServico veiculoServico
 
 }).WithTags("Veiculo");
 
-app.MapGet("/veiculos/{id}", ([FromRoute] int? id, IVeiculoServico veiculoServico) =>
+app.MapGet("/veiculo/{id}", ([FromRoute] int? id, IVeiculoServico veiculoServico) =>
 {
   var veiculo = veiculoServico.BuscarPorId(id ?? 0);
 
@@ -127,13 +177,14 @@ app.MapGet("/veiculos/{id}", ([FromRoute] int? id, IVeiculoServico veiculoServic
 
 app.MapPut("/veiculos/{id}", ([FromRoute] int? id, [FromBody] VeiculoDTO veiculoDTO, IVeiculoServico veiculoServico) =>
 {
+
   var veiculo = veiculoServico.BuscarPorId(id ?? 0);
 
   if (veiculo == null) return Results.NotFound();
 
+  var validacao = validaDTO(veiculoDTO);
 
-  var validacao = new ErrosDeValidacao();
-  if (validacao.Mensagens.Count > 0)
+  if (validacao.Mensagens.Any())
   {
     return Results.BadRequest(validacao);
   }

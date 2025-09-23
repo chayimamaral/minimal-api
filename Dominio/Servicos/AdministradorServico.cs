@@ -7,6 +7,8 @@ using minimal_api.Dominio.DTOs;
 using minimal_api.Dominio.Entidades;
 using minimal_api.Infraestrutura.Db;
 using Microsoft.EntityFrameworkCore;
+using minimal_api.Dominio.ModelViews;
+using minimal_api.Migrations;
 
 namespace minimal_api.Dominio.Servicos
 {
@@ -60,12 +62,12 @@ namespace minimal_api.Dominio.Servicos
             return _contexto.Administradores.Find(id);
         }
 
-        public List<Administrador> ObterTodos(int? pagina = 1)
+        public List<AdministradorModelView> ObterTodos(int? pagina = 1)
 
         {
-            var query = _contexto.Administradores.AsQueryable();
 
             int itensPorPagina = 10;
+            var query = _contexto.Administradores.AsQueryable();
 
             if (pagina == null)
             {
@@ -74,9 +76,15 @@ namespace minimal_api.Dominio.Servicos
 
             query = query.Skip(((int)pagina - 1) * itensPorPagina).Take(itensPorPagina);
 
-            return query.ToList();
-        }
+            //return query.ToList();
 
+            return query.Select(static a => new AdministradorModelView
+            {
+                Id = a.Id,
+                Email = a.Email,
+                Perfil = a.Perfil
+            }).ToList();
+        }
     }
 }
 

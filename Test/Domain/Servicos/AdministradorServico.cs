@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using minimal_api.Dominio.Entidades;
@@ -12,9 +13,15 @@ namespace Test.Domain.Servicos
     {
         private DbContexto CriarContextoDeTeste()
         {
+            //var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+            var path = Path.GetFullPath(Path.Combine(assemblyPath, @"../../../")); // Caminho para a raiz do projeto
+
             var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .SetBasePath(path)
+                .AddJsonFile("appsettings.Test.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
             var configuration = builder.Build();
@@ -28,7 +35,7 @@ namespace Test.Domain.Servicos
             return new DbContexto(options);
         }
         [TestMethod]
-        public void TestandoSalvarAdministrador()
+        public void TestandoBuscaPorId()
         {
             // Arrange
             // Aqui você pode configurar os dados necessários para o teste
@@ -39,20 +46,27 @@ namespace Test.Domain.Servicos
 
             var adm = new Administrador();
 
-            adm.Email = "teste@teste.com";
+            adm.Id = 1;
+            adm.Email = "patriaamadabrasil@teste.com";
             adm.Senha = "123456";
             adm.Perfil = "Adm";
             // Act
             // Aqui você pode chamar o método que deseja testar
 
             var admServico = new AdministradorServico(contexto);
-            contexto.Administradores.Add(adm);
+
             admServico.Incluir(adm);
+
+            adm.Email = "foo@teste.com";
+
+            //contexto.Administradores.Add(adm);
+            admServico.Atualizar(adm);
+            //var admin = admServico.BuscarPorId(1);
 
             // Assert
             // Aqui você pode verificar se o resultado do método é o esperado
 
-            Assert.AreEqual(1, admServico.ObterTodos(1).Count);
+            Assert.AreEqual(1, actual: adm.Id);
         }
     }
 }

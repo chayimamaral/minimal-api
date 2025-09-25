@@ -17,7 +17,7 @@ namespace Test.Domain.Servicos
 
             var assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            var path = Path.GetFullPath(Path.Combine(assemblyPath, @"../../../")); // Caminho para a raiz do projeto
+            var path = Path.GetFullPath(Path.Combine(assemblyPath ?? "", @"../../../")); // Caminho para a raiz do projeto
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(path)

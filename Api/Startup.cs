@@ -17,6 +17,8 @@ using minimal_api.Dominio.Interfaces;
 using minimal_api.Dominio.ModelViews;
 using minimal_api.Dominio.Servicos;
 using minimal_api.Infraestrutura.Db;
+using Scalar.AspNetCore;
+using Microsoft.AspNetCore.Builder;
 
 public class Startup
 {
@@ -115,6 +117,9 @@ public class Startup
   {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    // app.MapOpenApi();      // Scalar / OpenAPI nativo
+    // app.MapScalarApiReference();
 
     app.UseRouting();
 
